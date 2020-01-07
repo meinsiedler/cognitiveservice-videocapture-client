@@ -69,9 +69,12 @@ namespace VideoCapture.UI
             // services.AddTransient<IImageAnalyzer, ComputerVisionAnalyzer>();
             services.AddTransient<IImageAnalyzer, CustomVisionAnalyzer>();
 
+            services.AddSingleton<MissingElementFinder>();
+
             services.AddScoped<MainViewModel>(
                 sp => new MainViewModel(
                     this.ServiceProvider.GetRequiredService<IVideoGrabber>(),
+                    this.ServiceProvider.GetRequiredService<MissingElementFinder>(),
                     TimeSpan.FromSeconds(1),
                     this.ServiceProvider.GetServices<IImageAnalyzer>().ToArray()));
             services.AddTransient(typeof(MainWindow));

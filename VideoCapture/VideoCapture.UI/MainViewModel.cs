@@ -24,7 +24,9 @@ namespace VideoCapture.UI
         private readonly IVideoGrabber videoGrabber;
         private readonly TimeSpan minDelayBetweenAnalysis;
         private readonly IImageAnalyzer[] imageAnalyzers;
+        private readonly MissingElementFinder missingElementFinder;
         private IDictionary<IImageAnalyzer, AnalyzerStatisticsViewModel> statistics;
+        private string missingTag;
         private byte[] currentFrame;
         private int frameWidth;
         private int frameHeight;
@@ -41,11 +43,13 @@ namespace VideoCapture.UI
         /// <exception cref="System.ArgumentNullException">The video grabber instance must be set.</exception>
         public MainViewModel(
             IVideoGrabber videoGrabber,
+            MissingElementFinder missingElementFinder,
             TimeSpan minDelayBetweenAnalysis,
             params IImageAnalyzer[] imageAnalyzers)
         {
             this.videoGrabber = videoGrabber ?? throw new ArgumentNullException(nameof(videoGrabber));
             this.minDelayBetweenAnalysis = minDelayBetweenAnalysis;
+            this.missingElementFinder = missingElementFinder ?? throw new ArgumentNullException(nameof(missingElementFinder));
             this.imageAnalyzers = imageAnalyzers;
             this.RegionTags = new ObservableCollection<RegionTagViewModel>();
             this.Statistics = imageAnalyzers.ToDictionary(a => a, a => new AnalyzerStatisticsViewModel()
@@ -139,6 +143,11 @@ namespace VideoCapture.UI
             set { this.SetProperty(ref this.statistics, value); }
         }
 
+        public string MissingTag
+        {
+            get { return this.missingElementFinder.MissingTag; }
+        }
+
         /// <summary>
         /// Initializes the view model.
         /// </summary>
@@ -190,7 +199,15 @@ namespace VideoCapture.UI
                                 RegionTag = regionTag,
                             });
                         }
+
+                        this.missingElementFinder.AddRegionTags(info.RegionTags.ToList());
                     }
+                    else
+                    {
+                        this.missingElementFinder.Reset();
+                    }
+
+                    this.RaisePropertyChanged(nameof(this.MissingTag));
                 }
 
                 this.currentlyAnalysing = false;
